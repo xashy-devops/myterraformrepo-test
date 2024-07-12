@@ -44,15 +44,26 @@ jobs:
           echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}" >> ~/.aws/credentials
           echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}" >> ~/.aws/credentials
 
+# ... (other steps)
+
       - name: Find changed Terraform directory
         id: find_changed_dir
         run: |
+          echo "Checking for changes in terraform-projects/"
           for dir in terraform-projects/*; do
-            if [[ -n $(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} "$dir") ]]; then
-              echo "directory=$dir" >> $GITHUB_OUTPUT # Use $GITHUB_OUTPUT for newer actions versions
+            echo "Checking directory: $dir"  
+            # Get the base SHA correctly for both pull_request and push events
+            base_sha="${{ github.event.pull_request.base.sha || github.event.before }}"
+
+            if [[ -n $(git diff --name-only $base_sha ${{ github.sha }} "$dir") ]]; then
+              echo "directory=$dir" >> $GITHUB_OUTPUT
               break
             fi
           done
+
+
+# ... (rest of your workflow using steps.find_changed_dir.outputs.directory)
+
 
       - name: Terraform Init
         working-directory: ${{ steps.find_changed_dir.outputs.directory }}
