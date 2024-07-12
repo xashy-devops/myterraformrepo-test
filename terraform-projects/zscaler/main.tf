@@ -9,7 +9,7 @@ terraform {
     bucket         = "myproject-backend-terraform-bucket"
     key            = "zscaler/terraform.tfstate"
     profile        = "dev"
-    region         = "us-east-1"
+    region         = "us-east-2"
     dynamodb_table = "terraform-lock-table"
     encrypt        = true
   }
