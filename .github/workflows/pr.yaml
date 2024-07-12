@@ -46,11 +46,12 @@ jobs:
         id: find_changed_dir
         run: |
             for dir in terraform-projects/*; do
-              if [[ -n $(git diff --name-only HEAD^ HEAD "$dir") ]]; then
-                echo "::set-output name=directory::$dir"
-                break  # Stop after the first changed dir is found
-              fi
-            done     
+             if [[ -n $(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} "$dir") ]]; then
+               echo "::set-output name=directory::$dir"
+               break 
+             fi
+            done
+          
 
       - name: Terraform Init
         run: terraform init
