@@ -75,9 +75,10 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ${{ steps.find_changed_dir.outputs.directory }}
-        run: terraform plan -out=plan.tfplan
-
+        run: terraform plan -out=plan.tfplan  -lock=false 
+        
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         working-directory: ${{ steps.find_changed_dir.outputs.directory }}
         run: terraform apply -auto-approve plan.tfplan
+        
