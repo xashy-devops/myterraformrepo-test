@@ -81,3 +81,4 @@ jobs:
         if: github.ref == 'refs/heads/main'
         working-directory: ${{ steps.find_changed_dir.outputs.directory }}
         run: terraform apply -auto-approve plan.tfplan
+        
