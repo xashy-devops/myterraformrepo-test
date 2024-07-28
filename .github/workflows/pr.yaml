@@ -44,42 +44,63 @@ jobs:
           echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}" >> ~/.aws/credentials
           echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}" >> ~/.aws/credentials
 
-# ... (other steps)
-
-      - name: Find changed Terraform directory
-        id: find_changed_dir
+      - name: Find Changed Directories
+        id: find_changed_dirs
         run: |
           echo "Checking for changes in terraform-projects/"
-          for dir in terraform-projects/*; do
-            echo "Checking directory: $dir"  
-            # Get the base SHA correctly for both pull_request and push events
-            base_sha="${{ github.event.pull_request.base.sha || github.event.before }}"
-
-            if [[ -n $(git diff --name-only $base_sha ${{ github.sha }} "$dir") ]]; then
-              echo "directory=$dir" >> $GITHUB_OUTPUT
-              break
+          changed_dirs=()
+          base_sha="${{ github.event.pull_request.base.sha || github.event.before }}"
+          
+          # Find all subdirectories in terraform-projects/
+          for dir in terraform-projects/*/; do
+            if [[ -d "$dir" ]]; then
+              echo "Checking directory: $dir"
+              # Check if there are any changes in this directory
+              if [[ -n $(git diff --name-only $base_sha ${{ github.sha }} "$dir") ]]; then
+                changed_dirs+=("${dir%/}") # Remove trailing slash for output
+              fi
             fi
           done
+          
+          # Join the array into a single string with a delimiter
+          changed_dirs_str=$(IFS=,; echo "${changed_dirs[*]}")
+          echo "changed_dirs=$changed_dirs_str" >> $GITHUB_OUTPUT
 
+      - name: Terraform Init, Validate, Plan, and Log Results
+        run: |
+          IFS=',' read -r -a dirs <<< "${{ steps.find_changed_dirs.outputs.changed_dirs }}"
+          for dir in "${dirs[@]}"; do
+            echo "Starting Terraform operations for directory: $dir"
+            cd "$dir"
+            
+            echo "Doing terraform init in $dir"
+            terraform init
+            
+            echo "Doing terraform validate in $dir"
+            terraform validate
+            
+            echo "Doing terraform plan in $dir"
+            terraform plan -lock=false | tee /tmp/plan_${dir//\//_}.log
+            
+            echo "Completed Terraform operations for directory: $dir"
+            cd -
+          done
 
-# ... (rest of your workflow using steps.find_changed_dir.outputs.directory)
+      - name: Display Terraform Plan Logs
+        run: |
+          IFS=',' read -r -a dirs <<< "${{ steps.find_changed_dirs.outputs.changed_dirs }}"
+          for dir in "${dirs[@]}"; do
+            echo "Displaying Terraform plan log for $dir"
+            cat /tmp/plan_${dir//\//_}.log
+          done
 
-
-      - name: Terraform Init
-        working-directory: ${{ steps.find_changed_dir.outputs.directory }}
-        run: terraform init
-
-      - name: Terraform Validate
-        working-directory: ${{ steps.find_changed_dir.outputs.directory }}
-        run: terraform validate
-
-      - name: Terraform Plan
-        working-directory: ${{ steps.find_changed_dir.outputs.directory }}
-        run: terraform plan -lock=false 
-        
-      - name: Terraform Apply
+      - name: Apply Terraform Changes
         if: github.ref == 'refs/heads/main'
-        working-directory: ${{ steps.find_changed_dir.outputs.directory }}
-        run: terraform apply -auto-approve -lock=false 
-        
-#### Hopefull workflow should look good"
+        run: |
+          IFS=',' read -r -a dirs <<< "${{ steps.find_changed_dirs.outputs.changed_dirs }}"
+          for dir in "${dirs[@]}"; do
+            echo "Applying Terraform changes in $dir"
+            cd "$dir"
+            terraform apply -auto-approve -lock=false
+            cd -
+          done
