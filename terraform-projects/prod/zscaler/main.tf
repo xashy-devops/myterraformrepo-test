@@ -1,6 +1,5 @@
 
-provider "aws" {
-  profile = "dev"  
+provider "aws" { 
   region  = "us-east-2"
 }
 
@@ -8,7 +7,6 @@ terraform {
   backend "s3" {
     bucket         = "myproject-backend-terraform-bucket"
     key            = "zscaler/terraform.tfstate"
-    profile        = "dev"
     region         = "us-east-2"
     dynamodb_table = "terraform-lock-table"
     encrypt        = true
