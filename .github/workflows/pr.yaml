@@ -1,68 +1,58 @@
-name: Terraform CI with OIDC
+name: Terraform CI
 
 on:
   push:
     branches:
       - main
     paths:
-      - "terraform-projects/**"
+      - 'terraform-projects/**'
   pull_request:
     branches:
       - main
     paths:
-      - "terraform-projects/**"
-
-env: 
-  TF_IN_AUTOMATION: 1
-  AWS_REGION: us-east-2 
+      - 'terraform-projects/**'
 
 jobs:
   terraform:
-    name: Terraform ${{ matrix.terraform_folder }}
+    name: 'Terraform'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        terraform_folder: ["terraform-projects/dev", "terraform-projects/prod"]
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch all history
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: 1.0.11
 
-      - name: Set AWS Environment
-        run: |
-          if [[ "${{ matrix.terraform_folder }}" == "terraform-projects/dev" ]]; then
-            echo "AWS_ENVIRONMENT=dev" >> $GITHUB_ENV
-            echo "AWS_ROLE_ARN=arn:aws:iam::975050274549:role/xashy-devops" >> $GITHUB_ENV 
-          elif [[ "${{ matrix.terraform_folder }}" == "terraform-projects/prod" ]]; then
-            echo "AWS_ENVIRONMENT=prod" >> $GITHUB_ENV
-            echo "AWS_ROLE_ARN=arn:aws:iam::975050274549:role/xashy-devops" >> $GITHUB_ENV 
-          else
-            echo "Invalid terraform_folder"
-            exit 1
-          fi 
-
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+        run: |
+          mkdir -p ~/.aws
+          echo "[profile dev]" > ~/.aws/config
+          echo "region = us-east-2" >> ~/.aws/config
+          echo "output = json" >> ~/.aws/config
+          echo "[profile prod]" >> ~/.aws/config
+          echo "region = us-east-2" >> ~/.aws/config
+          echo "output = json" >> ~/.aws/config
+          echo "[dev]" > ~/.aws/credentials
+          echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}" >> ~/.aws/credentials
+          echo "[prod]" >> ~/.aws/credentials
+          echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}" >> ~/.aws/credentials
 
       - name: Find Changed Directories
         id: find_changed_dirs
         run: |
-          echo "Checking for changes in terraform-projects/${{ env.AWS_ENVIRONMENT }}/"
+          echo "Checking for changes in terraform-projects/"
           changed_dirs=()
           base_sha="${{ github.event.pull_request.base.sha || github.event.before }}"
-
-          # Find all subdirectories in terraform-projects/${{ env.AWS_ENVIRONMENT }}/
-          for dir in terraform-projects/${{ env.AWS_ENVIRONMENT }}/*/; do 
+          
+          # Find all subdirectories in terraform-projects/
+          for dir in terraform-projects/*/; do
             if [[ -d "$dir" ]]; then
               echo "Checking directory: $dir"
               # Check if there are any changes in this directory
@@ -71,26 +61,32 @@ jobs:
               fi
             fi
           done
-
+          
           # Join the array into a single string with a delimiter
           changed_dirs_str=$(IFS=,; echo "${changed_dirs[*]}")
           echo "changed_dirs=$changed_dirs_str" >> $GITHUB_OUTPUT
-  
-      - name: Terraform Init, Validate, Plan
-        if: steps.find_changed_dirs.outputs.changed_dirs != ''
+
+      - name: Terraform Init, Validate, Plan, and Log Results
         run: |
           IFS=',' read -r -a dirs <<< "${{ steps.find_changed_dirs.outputs.changed_dirs }}"
           for dir in "${dirs[@]}"; do
             echo -e "\033[1;34mStarting Terraform operations for directory: $dir\033[0m"  # Bold Blue
-            pushd "$dir"
-            terraform init -input=false
-            terraform validate -no-color
-            terraform plan -input=false -out=tfplan -lock=false | tee /tmp/plan_${dir//\//_}.log
-            popd # Switch back to original directory
+            cd "$dir"
+            
+            echo -e "\033[1;32mDoing terraform init in $dir\033[0m"  # Bold Green
+            terraform init
+            
+            echo -e "\033[1;32mDoing terraform validate in $dir\033[0m"  # Bold Green
+            terraform validate
+            
+            echo -e "\033[1;33mDoing terraform plan in $dir\033[0m"  # Bold Yellow
+            terraform plan -lock=false | tee /tmp/plan_${dir//\//_}.log
+            
+            echo -e "\033[1;34mCompleted Terraform operations for directory: $dir\033[0m"  # Bold Blue
+            cd -
           done
 
       - name: Display Terraform Plan Logs
-        if: steps.find_changed_dirs.outputs.changed_dirs != ''
         run: |
           IFS=',' read -r -a dirs <<< "${{ steps.find_changed_dirs.outputs.changed_dirs }}"
           for dir in "${dirs[@]}"; do
@@ -98,13 +94,13 @@ jobs:
             cat /tmp/plan_${dir//\//_}.log
           done
 
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && matrix.terraform_folder == 'terraform-projects/prod' && steps.find_changed_dirs.outputs.changed_dirs != ''
+      - name: Apply Terraform Changes
+        if: github.ref == 'refs/heads/main'
         run: |
           IFS=',' read -r -a dirs <<< "${{ steps.find_changed_dirs.outputs.changed_dirs }}"
           for dir in "${dirs[@]}"; do
             echo -e "\033[1;31mApplying Terraform changes in $dir\033[0m"  # Bold Red
-            pushd "$dir"
-            terraform apply -input=false -auto-approve tfplan
-            popd 
-          done 
+            cd "$dir"
+            terraform apply -auto-approve -lock=false
+            cd -
+          done
