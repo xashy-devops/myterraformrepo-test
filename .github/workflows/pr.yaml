@@ -39,10 +39,10 @@ jobs:
         run: |
           if [[ "${{ matrix.terraform_folder }}" == "terraform-projects/dev" ]]; then
             echo "AWS_ENVIRONMENT=dev" >> $GITHUB_ENV
-            echo "AWS_ROLE_ARN=arn:aws:iam::YOUR_DEV_ACCOUNT_ID:role/YOUR_DEV_ROLE_NAME" >> $GITHUB_ENV 
+            echo "AWS_ROLE_ARN=arn:aws:iam::975050274549:role/xashy-devops" >> $GITHUB_ENV 
           elif [[ "${{ matrix.terraform_folder }}" == "terraform-projects/prod" ]]; then
             echo "AWS_ENVIRONMENT=prod" >> $GITHUB_ENV
-            echo "AWS_ROLE_ARN=arn:aws:iam::YOUR_PROD_ACCOUNT_ID:role/YOUR_PROD_ROLE_NAME" >> $GITHUB_ENV 
+            echo "AWS_ROLE_ARN=arn:aws:iam::975050274549:role/xashy-devops" >> $GITHUB_ENV 
           else
             echo "Invalid terraform_folder"
             exit 1
