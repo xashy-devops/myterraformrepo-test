@@ -1,5 +1,4 @@
-provider "aws" {
-  profile = "prod"  
+provider "aws" { 
   region  = "us-east-2"
 }
 
@@ -8,7 +7,6 @@ terraform {
     bucket         = "terraform-project-bucket-xashy-prod"
     key            = "sso/terraform.tfstate"
     profile        = "prod"
-    region         = "us-east-2"
     dynamodb_table = "terraform-state-locking"
     encrypt        = true
   }
@@ -21,4 +19,4 @@ resource "aws_vpc" "main" {
   }
 }
 
-#################################@@@@@@@@@@
+#################################@@@@@@@@@@@@@@@@@@@@@AAAAA
