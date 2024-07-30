@@ -19,7 +19,7 @@ permissions:
 env: 
   TF_IN_AUTOMATION: 1
   AWS_REGION: us-east-2 
-  AWS_ROLE_ARN: arn:aws:iam::975050274549:role/xashy-devops
+  AWS_ROLE_ARN: arn:aws:iam::975050274549:role/mygithubrole
 
 jobs:
   terraform:
