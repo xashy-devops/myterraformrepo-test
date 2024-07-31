@@ -5,10 +5,10 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "myproject-backend-terraform-bucket"
-    key            = "zscaler/terraform.tfstate"
+    bucket         = "terraform-project-bucket-xashy-prod"
+    key            = "sso/terraform.tfstate"
     region         = "us-east-2"
-    dynamodb_table = "terraform-lock-table"
+    dynamodb_table = "terraform-state-locking"
     encrypt        = true
   }
 }
