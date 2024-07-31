@@ -1,22 +1,23 @@
+
 provider "aws" { 
   region  = "us-east-2"
 }
 
 terraform {
   backend "s3" {
-    bucket         = "terraform-project-bucket-xashy-prod"
-    key            = "sso/terraform.tfstate"
-    profile        = "prod"
-    dynamodb_table = "terraform-state-locking"
+    bucket         = "myproject-backend-terraform-bucket"
+    key            = "zscaler/terraform.tfstate"
+    region         = "us-east-2"
+    dynamodb_table = "terraform-lock-table"
     encrypt        = true
   }
 }
 
-resource "aws_vpc" "main" {
-  cidr_block = "20.0.0.0/16"
-  tags = {
-    Name = "main-vpc"
-  }
-}
+# resource "aws_vpc" "main" {
+#   cidr_block = "10.0.0.0/16"
+#   tags = {
+#     Name = "xashy-vpc"
+#   }
+# }
 
-#################################@@@@@@@@@@@@@@@@@@@@@AAAAA
+###################################@@@@@@@@@@@
