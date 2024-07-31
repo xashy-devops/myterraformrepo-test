@@ -5,13 +5,13 @@ on:
     branches:
       - main
     paths:
-      - "terraform-projects/**"
+      - "terraform-projects/**/**"
     
   pull_request:
     branches:
       - main
     paths:
-      - "terraform-projects/**"
+      - "terraform-projects/**/**"
     
 
 permissions:
