@@ -5,14 +5,14 @@ on:
     branches:
       - main
     paths:
-      - "terraform-projects/dev/**/*.tf"
-      - "terraform-projects/prod/**/*.tf"
+      - "terraform-projects/**"
+    
   pull_request:
     branches:
       - main
     paths:
-      - "terraform-projects/dev/**/*.tf"
-      - "terraform-projects/prod/**/*.tf"
+      - "terraform-projects/**"
+    
 
 permissions:
   id-token: write
