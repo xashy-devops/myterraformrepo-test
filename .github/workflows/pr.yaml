@@ -15,7 +15,12 @@ on:
       - "terraform-projects/prod/**/*.tf"
 
   workflow_dispatch:
-   
+
+      inputs:
+        branch:
+          description: 'Branch to run the workflow on'
+          required: true
+          default: 'xashy-devops-patch-2'
 
 permissions:
   id-token: write
