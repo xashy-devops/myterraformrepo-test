@@ -56,6 +56,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2  # Configure AWS credentials using OIDC
         with:
           aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
 
       - name: Find Changed Directories
         id: find_changed_dirs
