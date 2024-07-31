@@ -3,12 +3,12 @@ name: Terraform CI with OIDC
 on:
   push:
     branches:
-      - '**'  
+      - main
     paths:
       - "terraform-projects/**"
   pull_request:
     branches:
-      - '**' 
+      - main
     paths:
       - "terraform-projects/**"
 
@@ -19,7 +19,6 @@ permissions:
 env: 
   TF_IN_AUTOMATION: 1
   AWS_REGION: us-east-2 
-
 
 jobs:
   terraform:
@@ -43,7 +42,7 @@ jobs:
         run: |
           if [[ "${{ matrix.terraform_folder }}" == "terraform-projects/dev" ]]; then
             echo "AWS_ENVIRONMENT=dev" >> $GITHUB_ENV
-            echo "AWS_ROLE_ARN=arn:aws:iam::975050274549:role/mygithubrole" >> $GITHUB_ENV
+            echo "AWS_ROLE_ARN=arn:aws:iam::975050274549:role/dev_githubrole" >> $GITHUB_ENV
           elif [[ "${{ matrix.terraform_folder }}" == "terraform-projects/prod" ]]; then
             echo "AWS_ENVIRONMENT=prod" >> $GITHUB_ENV
             echo "AWS_ROLE_ARN=arn:aws:iam::487563750579:role/prod-role" >> $GITHUB_ENV
@@ -61,8 +60,8 @@ jobs:
       - name: Find Changed Directories
         id: find_changed_dirs
         run: |
-          # Use git diff to find changed directories
-          CHANGED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^terraform-projects/' | cut -d/ -f1-2 | sort -u)
+          # Use git diff to find changed directories and include subdirectories
+          CHANGED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^terraform-projects/' | awk -F'/' '{print $1"/"$2"/"$3}' | sort -u)
           echo "::set-output name=changed_dirs::$CHANGED_DIRS"
 
       - name: Terraform Init, Validate, Plan
@@ -101,6 +100,6 @@ jobs:
           for dir in "${dirs[@]}"; do
             echo -e "\033[1;34mApplying Terraform for directory: $dir\033[0m"  # Bold Blue
             cd "$dir"
-            terraform apply -input=false -auto-approve tfplan
+            terraform apply -input=false -auto-approve
             cd -
           done
