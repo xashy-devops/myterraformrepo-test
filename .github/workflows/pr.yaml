@@ -1,18 +1,19 @@
-name: Terraform CI with OIDC
-
 on:
+
+
   push:
     branches:
       - main
     paths:
-      - "terraform-projects/**/**"
-    
+      - "terraform-projects/dev/**/*.tf"
+      - "terraform-projects/prod/**/*.tf"
   pull_request:
     branches:
       - main
     paths:
-      - "terraform-projects/**/**"
-    
+      - "terraform-projects/dev/**/*.tf"
+      - "terraform-projects/prod/**/*.tf"
+   
 
 permissions:
   id-token: write
