@@ -6,7 +6,6 @@ terraform {
   backend "s3" {
     bucket         = "terraform-project-bucket-xashy-prod"
     key            = "sso/terraform.tfstate"
-    profile        = "prod"
     dynamodb_table = "terraform-state-locking"
     encrypt        = true
   }
