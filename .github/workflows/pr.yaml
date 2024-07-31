@@ -5,22 +5,14 @@ on:
     branches:
       - main
     paths:
-      - "terraform-projects/dev/**/*.tf"
-      - "terraform-projects/prod/**/*.tf"
+      - "terraform-projects/dev/**"
+      - "terraform-projects/prod/**"
   pull_request:
     branches:
       - main
     paths:
-      - "terraform-projects/dev/**/*.tf"
-      - "terraform-projects/prod/**/*.tf"
-
-  workflow_dispatch:
-
-      inputs:
-        branch:
-          description: 'Branch to run the workflow on'
-          required: true
-          default: 'xashy-devops-patch-2'
+      - "terraform-projects/**"
+      - "terraform-projects/**"
 
 permissions:
   id-token: write
