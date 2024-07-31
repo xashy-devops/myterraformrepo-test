@@ -13,6 +13,8 @@ on:
     paths:
       - "terraform-projects/dev/**/*.tf"
       - "terraform-projects/prod/**/*.tf"
+
+  workflow_dispatch:
    
 
 permissions:
